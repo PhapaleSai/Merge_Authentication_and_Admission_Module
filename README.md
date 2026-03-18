@@ -1,4 +1,4 @@
-# PVG College Auth & Role Management Demo 🎓
+# PVG College Auth & Authorization Module 🎓
 
 A full-stack authentication, authorization, and student management application built for **PVG College of Science**.
 
