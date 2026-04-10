@@ -1,7 +1,13 @@
 {
-  "name": "pvg-auth-system",
+  "name": "create-pvg-auth",
   "version": "1.0.0",
-  "description": "PVG Authentication and Authorization System",
+  "description": "CLI scaffolding tool for creating the PVG Authentication and Authorization System",
+  "bin": {
+    "create-pvg-auth": "./bin/create-pvg-auth.js"
+  },
+  "files": [
+    "bin"
+  ],
   "main": "index.js",
   "scripts": {
     "dev:backend": "cd backend && venv\\Scripts\\python.exe -m uvicorn main:app --reload --port 8000",
