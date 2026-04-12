@@ -14,7 +14,6 @@ function Welcome() {
         api.get('/users/me')
             .then((res) => setUser(res.data))
             .catch(() => {
-                // Try legacy endpoint if new one fails (for backward compat)
                 api.get('/me')
                     .then((res) => setUser(res.data))
                     .catch(() => {
@@ -36,72 +35,72 @@ function Welcome() {
 
     if (!user) {
         return (
-            <div className="page-container">
-                <div className="loading-screen">
-                    <span className="spinner large" />
-                    <p>Verifying your JWT token...</p>
-                </div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--erp-surface)' }}>
+                <div className="erp-loader"></div>
             </div>
         );
     }
 
     return (
-        <div className="page-container">
-            <TiltCard className="welcome-card">
-                <span className="badge success">✓ Authenticated via JWT</span>
-                <div className="welcome-icon">🎉</div>
-                <h1 className="welcome-heading">
-                    Hi, <span className="highlight">{user.username}</span>!
-                </h1>
-                <p className="welcome-subtitle">
-                    <TypeWriter text="Welcome to the PVG Auth Dashboard" speed={40} />
-                </p>
+        <div style={{ minHeight: '100vh', background: 'var(--erp-surface)', padding: '3rem 1rem' }}>
+            <div className="erp-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <div className="erp-alert erp-alert--success" style={{ marginBottom: '2rem', animation: 'slideDown 0.5s ease-out' }}>
+                    <i className="fa-solid fa-circle-check"></i>
+                    <div>Authentication successful! Your JWT session is active.</div>
+                </div>
 
-                <div className="student-info">
-                    <div className="info-row">
-                        <span className="info-label">🏷️ Username</span>
-                        <span className="info-value">{user.username}</span>
+                <div className="erp-card" style={{ padding: '2.5rem', textAlign: 'center', marginBottom: '2rem', animation: 'fadeIn 0.6s ease-out' }}>
+                    <div className="erp-avatar erp-avatar--lg" style={{ width: '80px', height: '80px', fontSize: '2rem', margin: '0 auto 1.5rem', background: 'var(--erp-primary)' }}>
+                        {user.username[0].toUpperCase()}
                     </div>
-                    <div className="info-row">
-                        <span className="info-label">📧 Email</span>
-                        <span className="info-value">{user.email}</span>
-                    </div>
-                    <div className="info-row">
-                        <span className="info-label">🛡️ Role</span>
-                        <span className={`badge ${user.role === 'admin' ? 'danger' : 'success'}`}>
-                            {user.role || 'guest'}
-                        </span>
+                    <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Welcome, {user.username}!</h1>
+                    <p style={{ color: 'var(--erp-text-muted)', fontSize: '1.1rem', marginBottom: '2rem' }}>You are now signed into the PVG Unified Portal.</p>
+                    
+                    <div className="erp-form-grid-2" style={{ textAlign: 'left', gap: '1.5rem', borderTop: '1px solid var(--erp-border)', paddingTop: '2rem' }}>
+                        <div>
+                            <label style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--erp-text-muted)', fontWeight: 700 }}>Email Identity</label>
+                            <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{user.email}</div>
+                        </div>
+                        <div>
+                            <label style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--erp-text-muted)', fontWeight: 700 }}>Account Privilege</label>
+                            <div>
+                                <span className={`erp-pill ${user.role === 'admin' ? 'erp-pill--active' : 'erp-pill--pending'}`} style={{ textTransform: 'uppercase' }}>
+                                    {user.role || 'Guest'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {['admin', 'vice_principal', 'hod'].includes(user.role) && (
-                    <Link to="/admin" className="btn-admin-link" style={{ 
-                        display: 'block', 
-                        textAlign: 'center', 
-                        margin: '1rem 0', 
-                        padding: '0.8rem', 
-                        background: 'linear-gradient(45deg, #FF3D00, #FF9100)', 
-                        color: 'white', 
-                        borderRadius: '8px', 
-                        textDecoration: 'none',
-                        fontWeight: 'bold',
-                        boxShadow: '0 4px 15px rgba(255, 61, 0, 0.3)'
-                    }}>
-                        Go to Admin Dashboard
-                    </Link>
-                )}
-
-                {token && (
-                    <div className="token-display">
-                        <div className="token-header">🔑 Your JWT Token</div>
-                        <JwtDisplay token={token} />
+                    <div className="erp-card" style={{ marginBottom: '2rem', background: 'var(--erp-primary)', border: 'none', color: 'white' }}>
+                        <div className="erp-card__body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>Administrative Access Detected</div>
+                                <div style={{ opacity: 0.8 }}>You have permission to manage the system environment.</div>
+                            </div>
+                            <button className="erp-btn erp-btn--light" onClick={() => window.location.href = '/admin/dashboard'}>
+                                Launch Admin <i className="fa-solid fa-arrow-up-right-from-square"></i>
+                            </button>
+                        </div>
                     </div>
                 )}
 
-                <button className="btn-logout" onClick={handleLogout}>
-                    Logout
-                </button>
-            </TiltCard>
+                <div className="erp-card" style={{ marginBottom: '2rem' }}>
+                    <div className="erp-card__header">
+                        <div className="erp-card__title"><i className="fa-solid fa-key" style={{ marginRight: '0.5rem', opacity: 0.5 }}></i> Current JWT Integrity</div>
+                    </div>
+                    <div className="erp-card__body">
+                        <JwtDisplay token={token} />
+                    </div>
+                </div>
+
+                <div style={{ textAlign: 'center' }}>
+                    <button className="erp-btn erp-btn--ghost erp-btn--lg" onClick={handleLogout}>
+                        <i className="fa-solid fa-right-from-bracket"></i> Terminate Session
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

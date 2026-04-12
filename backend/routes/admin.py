@@ -23,6 +23,8 @@ class DashboardStats(BaseModel):
     total_roles: int
     active_sessions: int
     total_tokens: int
+    user_growth: List[dict] = []
+    login_growth: List[dict] = []
 
 class UserDetail(BaseModel):
     user_id: int
@@ -154,23 +156,91 @@ def get_audit_log(
     current_user: models.User = Depends(get_current_user),
 ):
     _require_admin(current_user)
-    # Pull last 20 token events as audit entries
-    tokens = (
-        db.query(models.UserToken)
-        .order_by(models.UserToken.created_at.desc())
-        .limit(20)
+    logs = (
+        db.query(models.LoginLog)
+        .order_by(models.LoginLog.login_time.desc())
+        .limit(50)
         .all()
     )
     entries = []
-    for t in tokens:
+    for l in logs:
+        # Construct a nice display name
+        display_user = "unknown"
+        if l.user:
+            display_user = l.user.username or l.user.email
+            
         entries.append(AuditEntry(
-            action="Login" if t.is_active else "Logout",
-            user=t.user.email if t.user else "unknown",
-            detail=f"Token {'active' if t.is_active else 'revoked'}",
-            timestamp=t.created_at.strftime("%Y-%m-%d %H:%M:%S") if t.created_at else "",
-            ip=t.created_from,
+            action="Login",
+            user=display_user,
+            detail=f"Status: {l.status}",
+            timestamp=l.login_time.strftime("%Y-%m-%d %H:%M:%S") if l.login_time else "",
+            ip=l.ip_address,
         ))
     return entries
+
+
+@router.get("/telemetry")
+def get_telemetry(
+    time_range: str = "7d",
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Returns registration and login telemetry for the specified range."""
+    _require_admin(current_user)
+    
+    now = datetime.utcnow()
+    results = []
+    
+    if time_range == "24h":
+        # Group by Hour for the last 24 hours
+        for i in range(23, -1, -1):
+            target_time = now - timedelta(hours=i)
+            hour_start = datetime(target_time.year, target_time.month, target_time.day, target_time.hour, 0, 0)
+            hour_end = hour_start + timedelta(hours=1)
+            
+            user_count = db.query(models.User).filter(
+                models.User.created_at >= hour_start,
+                models.User.created_at < hour_end
+            ).count()
+            
+            login_count = db.query(models.LoginLog).filter(
+                models.LoginLog.login_time >= hour_start,
+                models.LoginLog.login_time < hour_end
+            ).count()
+            
+            results.append({
+                "time": hour_start.strftime("%H:%M"),
+                "users": user_count,
+                "sessions": login_count
+            })
+    else:
+        # Group by Day for 7d or 30d
+        days_to_fetch = 7 if time_range == "7d" else 30
+        days_of_week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        
+        for i in range(days_to_fetch - 1, -1, -1):
+            target_date = now - timedelta(days=i)
+            day_start = datetime(target_date.year, target_date.month, target_date.day, 0, 0, 0)
+            day_end = day_start + timedelta(days=1)
+            
+            user_count = db.query(models.User).filter(
+                models.User.created_at >= day_start,
+                models.User.created_at < day_end
+            ).count()
+            
+            login_count = db.query(models.LoginLog).filter(
+                models.LoginLog.login_time >= day_start,
+                models.LoginLog.login_time < day_end
+            ).count()
+            
+            results.append({
+                "day": days_of_week[target_date.weekday()],
+                "date": day_start.strftime("%Y-%m-%d"),
+                "users": user_count,
+                "sessions": login_count
+            })
+            
+    return results
 
 
 @router.get("/traffic")
@@ -225,15 +295,16 @@ def export_system_data(
             for u in users
         ]
     elif data_type == "audit":
-        tokens = db.query(models.UserToken).order_by(models.UserToken.created_at.desc()).all()
+        logs = db.query(models.LoginLog).order_by(models.LoginLog.login_time.desc()).all()
         return [
             {
-                "action": "Login" if t.is_active else "Logout",
-                "user": t.user.email if t.user else "unknown",
-                "timestamp": t.created_at.strftime("%Y-%m-%d %H:%M:%S") if t.created_at else "",
-                "ip": t.created_from or "0.0.0.0"
+                "action": "Login",
+                "user": l.user.email if l.user else "unknown",
+                "timestamp": l.login_time.strftime("%Y-%m-%d %H:%M:%S") if l.login_time else "",
+                "ip": l.ip_address or "0.0.0.0",
+                "status": l.status
             }
-            for t in tokens
+            for l in logs
         ]
     else:
         raise HTTPException(status_code=400, detail="Invalid data type")

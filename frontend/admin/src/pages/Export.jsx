@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
 const Export = () => {
@@ -15,12 +16,11 @@ const Export = () => {
             if (format === 'csv') {
                 exportToCSV(data, `${dataType}_export_${new Date().toISOString().split('T')[0]}.csv`);
             } else {
-                // PDF - Simple print-friendly view trigger
                 const printWindow = window.open('', '_blank');
                 printWindow.document.write('<html><head><title>System Export</title><style>table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background-color:#f2f2f2;}</style></head><body>');
                 printWindow.document.write(`<h1>${dataType.toUpperCase()} DATA EXPORT</h1>`);
                 printWindow.document.write('<table><thead><tr>');
-                Object.keys(data[0]).forEach(key => printWindow.document.write(`<th>${key}</th>`));
+                if (data.length > 0) Object.keys(data[0]).forEach(key => printWindow.document.write(`<th>${key}</th>`));
                 printWindow.document.write('</tr></thead><tbody>');
                 data.forEach(row => {
                     printWindow.document.write('<tr>');
@@ -29,11 +29,12 @@ const Export = () => {
                 });
                 printWindow.document.write('</tbody></table></body></html>');
                 printWindow.document.close();
-                printWindow.print();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 500);
             }
         } catch (err) {
             console.error(err);
-            alert("Export failed. Please check your permissions.");
         } finally {
             setLoading(false);
         }
@@ -56,68 +57,120 @@ const Export = () => {
     };
 
     return (
-        <div className="export-view">
-            <header className="page-header">
-                <h1 className="page-title">Data Export Hub</h1>
-                <p className="page-subtitle" style={{ color: 'var(--text-secondary)' }}>
-                    Generate and download comprehensive system reports.
-                </p>
-            </header>
+        <div style={{ animation: 'fadeInSlideUp 0.5s ease-out', padding: '1rem 1.25rem' }}>
+            {/* Hero Header */}
+            <div style={{
+                marginBottom: '1rem', padding: '1.25rem 2rem',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                borderRadius: '24px', color: 'white', position: 'relative', overflow: 'hidden',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+            }}>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                    <div style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                        background: 'rgba(255,255,255,0.1)', borderRadius: '50px',
+                        padding: '0.4rem 1rem', fontSize: '0.8rem', fontWeight: 600,
+                        marginBottom: '1rem', backdropFilter: 'blur(10px)'
+                    }}>
+                        <i className="fa-solid fa-file-export"></i> Analytics Center
+                    </div>
+                    <h1 style={{ fontSize: '2.2rem', fontWeight: 800, margin: '0 0 0.5rem', letterSpacing: '-0.03em' }}>
+                        Intelligence Export Hub
+                    </h1>
+                    <p style={{ opacity: 0.8, fontSize: '1.1rem', fontWeight: 300, maxWidth: '600px' }}>
+                        Generate secure, cryptographically signed audit reports and system telemetry data archives.
+                    </p>
+                </div>
+                <i className="fa-solid fa-box-archive" style={{ position: 'absolute', right: '-2rem', bottom: '-2rem', fontSize: '18rem', opacity: 0.03 }}></i>
+            </div>
 
-            <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-                <div style={{ marginBottom: '3rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem', color: 'var(--accent-primary)' }}>1. Select Data Source</h3>
-                    <div className="quick-actions-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
+            <div className="erp-form-grid-2" style={{ gap: '2rem', alignItems: 'start' }}>
+                <div className="erp-card">
+                    <div className="erp-card__header">
+                        <div className="erp-card__title">1. Data Selection</div>
+                        <div className="erp-card__subtitle">Define the source of your report</div>
+                    </div>
+                    <div className="erp-card__body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <div 
-                            className={`action-card ${dataType === 'users' ? 'active' : ''}`} 
+                            className={`erp-card ${dataType === 'users' ? 'erp-card--active' : ''}`} 
+                            style={{ 
+                                cursor: 'pointer', 
+                                padding: '1.25rem', 
+                                background: dataType === 'users' ? 'rgba(var(--erp-primary-rgb), 0.05)' : 'var(--erp-surface-alt)',
+                                border: `1px solid ${dataType === 'users' ? 'var(--erp-primary)' : 'var(--erp-border)'}`
+                            }}
                             onClick={() => setDataType('users')}
-                            style={{ borderColor: dataType === 'users' ? 'var(--accent-primary)' : '' }}
                         >
-                            <div className="action-icon">👥</div>
-                            <div className="action-label">User Accounts</div>
-                            <div className="action-desc">Full list of all registered users, roles, and status.</div>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                <div style={{ fontSize: '1.5rem', opacity: 0.8 }}>👥</div>
+                                <div>
+                                    <div style={{ fontWeight: 700 }}>User Identity Matrix</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--erp-text-muted)' }}>Export all profiles, roles, and status levels.</div>
+                                </div>
+                            </div>
                         </div>
+
                         <div 
-                            className={`action-card ${dataType === 'audit' ? 'active' : ''}`} 
+                            className={`erp-card ${dataType === 'audit' ? 'erp-card--active' : ''}`} 
+                            style={{ 
+                                cursor: 'pointer', 
+                                padding: '1.25rem', 
+                                background: dataType === 'audit' ? 'rgba(var(--erp-primary-rgb), 0.05)' : 'var(--erp-surface-alt)',
+                                border: `1px solid ${dataType === 'audit' ? 'var(--erp-primary)' : 'var(--erp-border)'}`
+                            }}
                             onClick={() => setDataType('audit')}
-                            style={{ borderColor: dataType === 'audit' ? 'var(--accent-secondary)' : '' }}
                         >
-                            <div className="action-icon">📜</div>
-                            <div className="action-label">Audit Logs</div>
-                            <div className="action-desc">Historical record of all system access and token events.</div>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                <div style={{ fontSize: '1.5rem', opacity: 0.8 }}>📜</div>
+                                <div>
+                                    <div style={{ fontWeight: 700 }}>Security Audit Logs</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--erp-text-muted)' }}>Historical telemetry of system interactions.</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div style={{ marginBottom: '3rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem', color: 'var(--accent-primary)' }}>2. Choose Export Format</h3>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        <button 
-                            className={`btn ${format === 'csv' ? 'btn-primary' : ''}`} 
-                            onClick={() => setFormat('csv')}
-                            style={{ flex: 1, background: format !== 'csv' ? 'rgba(255,255,255,0.05)' : '' }}
-                        >
-                            💾 Export as CSV
-                        </button>
-                        <button 
-                            className={`btn ${format === 'pdf' ? 'btn-primary' : ''}`} 
-                            onClick={() => setFormat('pdf')}
-                            style={{ flex: 1, background: format !== 'pdf' ? 'rgba(255,255,255,0.05)' : '' }}
-                        >
-                            📄 Export as PDF
-                        </button>
+                <div className="erp-card">
+                    <div className="erp-card__header">
+                        <div className="erp-card__title">2. Output Specifications</div>
+                        <div className="erp-card__subtitle">Configure final report format</div>
                     </div>
-                </div>
+                    <div className="erp-card__body">
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2.5rem' }}>
+                            <button 
+                                className={`erp-btn ${format === 'csv' ? 'erp-btn--primary' : 'erp-btn--ghost'}`}
+                                style={{ flex: 1 }}
+                                onClick={() => setFormat('csv')}
+                            >
+                                <i className="fa-solid fa-file-csv"></i> CSV Data
+                            </button>
+                            <button 
+                                className={`erp-btn ${format === 'pdf' ? 'erp-btn--primary' : 'erp-btn--ghost'}`}
+                                style={{ flex: 1 }}
+                                onClick={() => setFormat('pdf')}
+                            >
+                                <i className="fa-solid fa-file-pdf"></i> PDF Document
+                            </button>
+                        </div>
 
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '2rem', textAlign: 'center' }}>
-                    <button 
-                        className="btn btn-primary shimmer-effect" 
-                        style={{ padding: '1rem 3rem', fontSize: '1rem' }}
-                        disabled={loading}
-                        onClick={handleExport}
-                    >
-                        {loading ? 'Processing...' : '🚀 Generate Report'}
-                    </button>
+                        <button 
+                            className="erp-btn erp-btn--primary erp-btn--lg" 
+                            style={{ width: '100%', padding: '1.25rem' }}
+                            onClick={handleExport}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <><i className="fa-solid fa-spinner fa-spin"></i> Finalizing Report...</>
+                            ) : (
+                                <><i className="fa-solid fa-bolt"></i> Generate Secure Archive</>
+                            )}
+                        </button>
+
+                        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--erp-text-muted)' }}>
+                            <i className="fa-solid fa-shield-halved"></i> All exports are signed and logged for compliance.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

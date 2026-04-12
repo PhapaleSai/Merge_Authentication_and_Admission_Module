@@ -14,6 +14,55 @@ class AuditMixin:
     created_from = Column(String(100), nullable=True)
     token_expiry = Column(DateTime, nullable=True)
 
+class TimestampMixin:
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+
+class Module(Base, TimestampMixin):
+    __tablename__ = "modules"
+
+    module_id = Column(Integer, primary_key=True, index=True)
+    module_name = Column(String(100), nullable=False)
+    description = Column(String, nullable=True)
+
+    features = relationship("Feature", back_populates="module")
+
+
+class Feature(Base, TimestampMixin):
+    __tablename__ = "features"
+
+    feature_id = Column(Integer, primary_key=True, index=True)
+    feature_name = Column(String(100), nullable=False)
+    description = Column(String, nullable=True)
+    module_id = Column(Integer, ForeignKey("modules.module_id"))
+
+    module = relationship("Module", back_populates="features")
+    permissions = relationship("Permission", back_populates="feature")
+
+
+class Permission(Base, TimestampMixin):
+    __tablename__ = "permissions"
+
+    permission_id = Column(Integer, primary_key=True, index=True)
+    permission_name = Column(String(150), nullable=False)
+    action = Column(String(50), nullable=True)
+    feature_id = Column(Integer, ForeignKey("features.feature_id"))
+
+    feature = relationship("Feature", back_populates="permissions")
+    role_permissions = relationship("RolePermission", back_populates="permission")
+
+
+class RolePermission(Base, TimestampMixin):
+    __tablename__ = "role_permissions"
+
+    role_permission_id = Column(Integer, primary_key=True, index=True)
+    role_id = Column(Integer, ForeignKey("roles.role_id"))
+    permission_id = Column(Integer, ForeignKey("permissions.permission_id"))
+
+    role = relationship("Role", back_populates="role_permissions")
+    permission = relationship("Permission", back_populates="role_permissions")
+
 
 class Role(Base, AuditMixin):
     __tablename__ = "roles"
@@ -21,10 +70,14 @@ class Role(Base, AuditMixin):
     role_id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(100), unique=True, nullable=False)
     description = Column(String, nullable=True)
-    permissions = Column(JSON, nullable=True, default=list)
-
-    # Relationship to user_roles
+    
+    # Relationships
     user_roles = relationship("UserRole", back_populates="role")
+    role_permissions = relationship("RolePermission", back_populates="role")
+
+    @property
+    def permissions(self):
+        return list(set(rp.permission.permission_name for rp in self.role_permissions if rp.permission))
 
 
 class User(Base, AuditMixin):
@@ -71,6 +124,19 @@ class UserToken(Base, AuditMixin):
     is_active = Column(Boolean, default=True)
 
     user = relationship("User", back_populates="tokens")
+
+
+class LoginLog(Base, AuditMixin):
+    __tablename__ = "login_log"
+
+    login_log_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"))
+    ip_address = Column(String(50), nullable=True)
+    device_info = Column(String(255), nullable=True)
+    status = Column(String(50), nullable=True)
+    login_time = Column(DateTime, default=func.now())
+
+    user = relationship("User")
 
 
 # Keep the old Student model so existing root APIs don't break

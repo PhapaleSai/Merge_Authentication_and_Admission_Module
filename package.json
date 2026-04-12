@@ -1,9 +1,9 @@
 {
-  "name": "create-pvg-auth",
+  "name": "create-sai-pvg-auth",
   "version": "1.0.0",
   "description": "CLI scaffolding tool for creating the PVG Authentication and Authorization System",
   "bin": {
-    "create-pvg-auth": "./bin/create-pvg-auth.js"
+    "create-sai-pvg-auth": "./bin/create-pvg-auth.js"
   },
   "files": [
     "bin"
@@ -20,5 +20,8 @@
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "college-erp-theme": "^1.0.0"
   }
 }

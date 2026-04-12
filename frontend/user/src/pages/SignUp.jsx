@@ -36,122 +36,128 @@ function SignUp() {
     };
 
     return (
-        <div className="page-container">
-            <TiltCard>
-                <div className="card-header">
-                    <span className="badge primary">✦ Student Registration</span>
-                    <div className="logo-wrapper">
-                        <span className="logo">🎓</span>
-                    </div>
-                    <h1>PVG College of Science</h1>
-                    <p className="subtitle">Create your student account to get started</p>
+        <div className="erp-auth-page">
+            <div className="erp-auth-page__brand">
+                <img src="/assets/wordmark.jpg" alt="PVG Logo" style={{ maxWidth: '180px', marginBottom: '2rem', filter: 'brightness(0) invert(1)' }} />
+                <h1 style={{ fontSize: '2.5rem', fontWeight: 800 }}>PVG COET&M</h1>
+                <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>Start your journey with Pune's premier engineering institute.</p>
+                <div style={{ marginTop: '3rem', opacity: 0.6, fontSize: '0.9rem' }}>
+                    &copy; {new Date().getFullYear()} Pune Vidyarthi Griha's COET&M
                 </div>
+            </div>
 
-                <form onSubmit={handleSubmit} className="form">
-                    <div className="form-group">
-                        <label htmlFor="name">Full Name</label>
-                        <div className="input-wrapper">
-                            <input
-                                id="name"
-                                type="text"
-                                name="name"
-                                className="has-icon"
-                                placeholder="Enter your full name"
-                                value={form.name}
-                                onChange={handleChange}
-                                required
-                                autoComplete="off"
-                            />
-                            <span className="input-icon">👤</span>
-                        </div>
+            <div className="erp-auth-page__form">
+                <div className="erp-auth-box" style={{ maxWidth: '550px' }}>
+                    <div className="erp-auth-box__header">
+                        <h2>Create Student Account</h2>
+                        <p>Join the PVG digital campus today.</p>
                     </div>
 
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="student_class">Class / Year</label>
-                            <div className="input-wrapper">
+                    <form onSubmit={handleSubmit}>
+                        <div className="erp-form-group">
+                            <label htmlFor="name">Full Name</label>
+                            <div style={{ position: 'relative' }}>
+                                <i className="fa-solid fa-user-tag" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }}></i>
+                                <input
+                                    id="name"
+                                    type="text"
+                                    name="name"
+                                    className="erp-form-control"
+                                    style={{ paddingLeft: '2.8rem' }}
+                                    placeholder="Enter your full name"
+                                    value={form.name}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="erp-form-grid-2" style={{ gap: '1.5rem', marginBottom: '1.5rem' }}>
+                            <div className="erp-form-group" style={{ marginBottom: 0 }}>
+                                <label htmlFor="student_class">Class / Year</label>
                                 <input
                                     id="student_class"
                                     type="text"
                                     name="student_class"
-                                    className="has-icon"
+                                    className="erp-form-control"
                                     placeholder="e.g. SY BSc"
                                     value={form.student_class}
                                     onChange={handleChange}
                                     required
                                 />
-                                <span className="input-icon">📚</span>
                             </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="phone">Phone Number</label>
-                            <div className="input-wrapper">
+                            <div className="erp-form-group" style={{ marginBottom: 0 }}>
+                                <label htmlFor="phone">Phone Number</label>
                                 <input
                                     id="phone"
                                     type="tel"
                                     name="phone"
-                                    className="has-icon"
+                                    className="erp-form-control"
                                     placeholder="9876543210"
                                     value={form.phone}
                                     onChange={handleChange}
                                     required
                                 />
-                                <span className="input-icon">📞</span>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="divider"><span>Account Credentials</span></div>
+                        <hr style={{ border: 'none', borderTop: '1px solid var(--erp-border)', margin: '1.5rem 0' }} />
 
-                    <div className="form-group">
-                        <label htmlFor="username">Username</label>
-                        <div className="input-wrapper">
-                            <input
-                                id="username"
-                                type="text"
-                                name="username"
-                                className="has-icon"
-                                placeholder="Choose a unique username"
-                                value={form.username}
-                                onChange={handleChange}
-                                required
-                                autoComplete="off"
-                            />
-                            <span className="input-icon">⚡</span>
+                        <div className="erp-form-group">
+                            <label htmlFor="username">Choose Username</label>
+                            <div style={{ position: 'relative' }}>
+                                <i className="fa-solid fa-at" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }}></i>
+                                <input
+                                    id="username"
+                                    type="text"
+                                    name="username"
+                                    className="erp-form-control"
+                                    style={{ paddingLeft: '2.8rem' }}
+                                    placeholder="username_123"
+                                    value={form.username}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="form-group">
-                        <label htmlFor="password">Password</label>
-                        <div className="input-wrapper">
-                            <input
-                                id="password"
-                                type="password"
-                                name="password"
-                                className="has-icon"
-                                placeholder="Create a strong password"
-                                value={form.password}
-                                onChange={handleChange}
-                                required
-                            />
-                            <span className="input-icon">🔒</span>
+                        <div className="erp-form-group">
+                            <label htmlFor="password">Security Password</label>
+                            <div style={{ position: 'relative' }}>
+                                <i className="fa-solid fa-lock" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }}></i>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    name="password"
+                                    className="erp-form-control"
+                                    style={{ paddingLeft: '2.8rem' }}
+                                    placeholder="••••••••"
+                                    value={form.password}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <PasswordStrength password={form.password} />
                         </div>
-                        <PasswordStrength password={form.password} />
+
+                        {error && (
+                            <div className="erp-alert erp-alert--danger" style={{ marginBottom: '1.5rem' }}>
+                                <i className="fa-solid fa-circle-exclamation"></i>
+                                {error}
+                            </div>
+                        )}
+
+                        <button type="submit" className="erp-btn erp-btn--primary erp-btn--lg" style={{ width: '100%' }} disabled={loading}>
+                            {loading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Create Account'}
+                        </button>
+                    </form>
+
+                    <div className="erp-auth-box__footer" style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.95rem', color: 'var(--erp-text-muted)' }}>
+                        Already have an account? {' '}
+                        <Link to="/login" style={{ color: 'var(--erp-primary)', fontWeight: 700, textDecoration: 'none' }}>Login here</Link>
                     </div>
-
-                    {error && <div className="error-msg">⚠ {error}</div>}
-
-                    <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? <span className="spinner" /> : 'Create Account →'}
-                    </button>
-                </form>
-
-                <p className="switch-link">
-                    Already have an account?{' '}
-                    <Link to="/login">Login here</Link>
-                </p>
-            </TiltCard>
+                </div>
+            </div>
         </div>
     );
 }

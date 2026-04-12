@@ -63,8 +63,19 @@ def update_role_permissions(
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
 
-    role.permissions = payload
+    # Clear existing
+    db.query(models.RolePermission).filter(models.RolePermission.role_id == role_id).delete()
+
+    # Add new
+    for perm_name in payload:
+        perm = db.query(models.Permission).filter(models.Permission.permission_name == perm_name).first()
+        if perm:
+            new_rp = models.RolePermission(
+                role_id=role_id,
+                permission_id=perm.permission_id
+            )
+            db.add(new_rp)
+
     role.updated_by = current_user.email
-    role.token_expiry = getattr(current_user, 'token_expiry', None)
     db.commit()
     return {"message": "Permissions updated", "permissions": role.permissions}

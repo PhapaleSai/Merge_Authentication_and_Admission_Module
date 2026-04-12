@@ -31,6 +31,75 @@ class TokenRefreshRequest(BaseModel):
     refresh_token: str
 
 
+# ── System ──────────────────────────────────────────────────────────────────
+
+class ModuleCreate(BaseModel):
+    module_name: str
+    description: Optional[str] = None
+
+
+class ModuleOut(BaseModel):
+    module_id: int
+    module_name: str
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class FeatureCreate(BaseModel):
+    feature_name: str
+    description: Optional[str] = None
+    module_id: int
+
+
+class FeatureOut(BaseModel):
+    feature_id: int
+    feature_name: str
+    description: Optional[str] = None
+    module_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class PermissionCreate(BaseModel):
+    permission_name: str
+    action: str
+    feature_id: int
+
+
+class PermissionOut(BaseModel):
+    permission_id: int
+    permission_name: str
+    action: Optional[str] = None
+    feature_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class RolePermissionOut(BaseModel):
+    role_permission_id: int
+    role_id: int
+    permission_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class LoginLogOut(BaseModel):
+    login_log_id: int
+    user_id: Optional[int] = None
+    ip_address: Optional[str] = None
+    device_info: Optional[str] = None
+    status: Optional[str] = None
+    login_time: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 # ── Roles ───────────────────────────────────────────────────────────────────
 
 class RoleOut(BaseModel):
@@ -64,6 +133,7 @@ class UserOut(BaseModel):
     full_name: Optional[str] = None
     email: str
     role: Optional[str] = None
+    permissions: List[str] = []
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

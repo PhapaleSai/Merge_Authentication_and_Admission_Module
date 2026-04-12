@@ -13,9 +13,23 @@ router = APIRouter(prefix="/users", tags=["User Management"])
 @router.get("/me", response_model=schemas.UserOut)
 def get_user_me(current_user: models.User = Depends(get_current_user)):
     """
-    Return the authenticated user's profile.
+    Return the authenticated user's profile, including role and permissions.
     """
-    return current_user
+    permissions = []
+    for ur in current_user.user_roles:
+        if ur.role and ur.role.permissions:
+            permissions.extend(ur.role.permissions)
+
+    return {
+        "user_id": current_user.user_id,
+        "username": current_user.username,
+        "full_name": current_user.full_name,
+        "email": current_user.email,
+        "role": current_user.role,
+        "permissions": list(set(permissions)),
+        "created_at": current_user.created_at,
+        "updated_at": current_user.updated_at,
+    }
 
 
 @router.get("", response_model=List[schemas.UserOut])

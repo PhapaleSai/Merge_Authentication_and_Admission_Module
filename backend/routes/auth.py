@@ -36,13 +36,40 @@ def login(
         (models.User.username == form_data.username)
     ).first()
 
+    ip_address = request.client.host if request.client else "unknown"
+    device_info = request.headers.get("user-agent", "unknown")
+    now = datetime.utcnow()
+
     if not user or not verify_password(form_data.password, user.password_hash):
-        user_id_audit = user.email if user else "anonymous"
+        log_failed = models.LoginLog(
+            user_id=user.user_id if user else None,
+            ip_address=ip_address,
+            device_info=device_info,
+            status="Failed",
+            login_time=now,
+            created_at=now,
+            updated_at=now
+        )
+        db.add(log_failed)
+        db.commit()
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username/email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Log success
+    log_success = models.LoginLog(
+        user_id=user.user_id,
+        ip_address=ip_address,
+        device_info=device_info,
+        status="Success",
+        login_time=now,
+        created_at=now,
+        updated_at=now
+    )
+    db.add(log_success)
 
     # Extract roles and permissions
     user_roles = [ur.role.role_name for ur in user.user_roles if ur.role]

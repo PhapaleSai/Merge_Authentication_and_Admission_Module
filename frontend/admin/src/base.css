@@ -1,0 +1,114 @@
+/* Global Base Styles for PVG Portal - Premium Edition */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    --erp-font-main: 'Outfit', sans-serif;
+    --erp-font-mono: 'JetBrains Mono', monospace;
+    
+    /* Enhanced Palette */
+    --erp-glow-primary: rgba(15, 66, 124, 0.4);
+    --erp-glass-bg: rgba(255, 255, 255, 0.05);
+    --erp-glass-border: rgba(255, 255, 255, 0.1);
+}
+
+[data-erp-theme='light'] {
+    --erp-bg: #f8fafc;
+    --erp-surface: #ffffff;
+    --erp-surface-alt: #f1f5f9;
+    --erp-text: #0f172a;
+    --erp-text-muted: #64748b;
+    --erp-border: rgba(0, 0, 0, 0.08);
+    --erp-glass-bg: rgba(255, 255, 255, 0.7);
+    --erp-glass-border: rgba(0, 0, 0, 0.05);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--erp-bg, #060912);
+    color: var(--erp-text, #f8fafc);
+    font-family: var(--erp-font-main);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glassmorphism Utility */
+.glass-effect {
+    background: var(--erp-glass-bg);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid var(--erp-glass-border);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Custom Scrollbar - Premium Minimalist */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--erp-border);
+    border-radius: 100px;
+    transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--erp-primary);
+}
+
+/* Animations */
+@keyframes fadeInSlideUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px) scale(0.98); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+    }
+}
+
+.animate-premium {
+    animation: fadeInSlideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 0 0 var(--erp-glow-primary); }
+    70% { box-shadow: 0 0 20px 10px rgba(15, 66, 124, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(15, 66, 124, 0); }
+}
+
+.glow-btn:hover {
+    animation: pulse-glow 2s infinite;
+}
+
+/* Auth Page specific enhancements */
+.erp-auth-page__brand {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.erp-auth-page__brand::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, var(--erp-primary) 0%, transparent 60%);
+    opacity: 0.15;
+    pointer-events: none;
+}

@@ -1,74 +1,156 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-    AreaChart, Area, XAxis, YAxis, 
-    CartesianGrid, Tooltip, ResponsiveContainer 
-} from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import api from '../api';
+import { useAuth } from '../AuthContext';
 
-const Dashboard = ({ user }) => {
+/* ── Mini Calendar ─────────────────────────────────────────── */
+const MiniCalendar = () => {
+    const today = new Date();
+    const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthName = viewDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
+    const cells = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+    const isToday = (d) => d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+
+    return (
+        <div style={{ padding: '1.5rem' }}>
+            {/* Month Nav */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <button
+                    onClick={() => setViewDate(new Date(year, month - 1, 1))}
+                    style={{ background: 'var(--erp-surface-alt)', border: '1px solid var(--erp-border)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', color: 'var(--erp-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                    <i className="fa-solid fa-chevron-left" style={{ fontSize: '0.7rem' }}></i>
+                </button>
+                <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{monthName}</span>
+                <button
+                    onClick={() => setViewDate(new Date(year, month + 1, 1))}
+                    style={{ background: 'var(--erp-surface-alt)', border: '1px solid var(--erp-border)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', color: 'var(--erp-text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                    <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.7rem' }}></i>
+                </button>
+            </div>
+
+            {/* Day headers */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                    <div key={d} style={{ textAlign: 'center', fontSize: '0.65rem', fontWeight: 700, color: 'var(--erp-text-muted)', padding: '4px 0' }}>{d}</div>
+                ))}
+            </div>
+
+            {/* Day cells */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+                {cells.map((d, i) => (
+                    <div key={i} style={{
+                        textAlign: 'center', padding: '6px 2px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 500,
+                        background: isToday(d) ? 'var(--erp-primary)' : 'transparent',
+                        color: isToday(d) ? 'white' : d ? 'var(--erp-text)' : 'transparent',
+                        cursor: d ? 'pointer' : 'default',
+                        transition: 'background 0.15s',
+                    }}>{d || ''}</div>
+                ))}
+            </div>
+
+            {/* Today's note */}
+            <div style={{ marginTop: '1.25rem', padding: '0.75rem 1rem', background: 'var(--erp-surface-alt)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8rem' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', flexShrink: 0 }}></div>
+                <span style={{ color: 'var(--erp-text-muted)' }}>
+                    Today — {today.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                </span>
+            </div>
+        </div>
+    );
+};
+
+/* ── Live Clock ────────────────────────────────────────────── */
+const LiveClock = () => {
+    const [time, setTime] = useState(new Date());
+    useEffect(() => {
+        const t = setInterval(() => setTime(new Date()), 1000);
+        return () => clearInterval(t);
+    }, []);
+    return (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+            {time.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+        </span>
+    );
+};
+
+/* ── Custom Tooltip ────────────────────────────────────────── */
+const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload?.length) {
+        return (
+            <div style={{ background: 'var(--erp-card)', border: '1px solid var(--erp-border)', borderRadius: '12px', padding: '0.75rem 1rem', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', fontSize: '0.82rem' }}>
+                <p style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{label}</p>
+                {payload.map(p => (
+                    <p key={p.name} style={{ color: p.color, margin: 0 }}>{p.name}: <strong>{p.value}</strong></p>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
+
+/* ── Main Dashboard ────────────────────────────────────────── */
+const Dashboard = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [audit, setAudit] = useState([]);
-    const [traffic, setTraffic] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [chartMode, setChartMode] = useState('live'); // 'live' or '24h'
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newUser, setNewUser] = useState({ username: '', email: '', password: '', role: 'student' });
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
-    const navigate = useNavigate();
+    const [telemetry, setTelemetry] = useState([]);
+    const [telemetryRange, setTelemetryRange] = useState('7d');
 
-    // Live mock data
-    const liveData = [
-        { time: '12:00', value: 400 },
-        { time: '13:00', value: 300 },
-        { time: '14:00', value: 900 },
-        { time: '15:00', value: 1200 },
-        { time: '16:00', value: 1500 },
-        { time: '17:00', value: 800 },
-        { time: '18:00', value: 600 },
-    ];
+    const isAdmin = ['admin', 'vice_principal', 'hod', 'principal', 'accountant'].includes(user?.role?.toLowerCase());
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        if (chartMode === '24h') {
-            fetchTraffic();
-        } else {
-            setTraffic(liveData);
-        }
-    }, [chartMode]);
-
-    const fetchData = () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
-        Promise.all([
-            api.get('/admin/stats'),
-            api.get('/admin/audit')
-        ]).then(([sRes, aRes]) => {
-            setStats(sRes.data);
-            setAudit(aRes.data.slice(0, 5));
-        })
-        .catch(err => console.error(err))
-        .finally(() => setLoading(false));
-    };
+        
+        // Fetch stats independently for resilience
+        api.get('/admin/stats').then(res => setStats(res.data)).catch(e => console.error('Stats fail:', e));
+        api.get('/admin/audit').then(res => setAudit(res.data.slice(0, 6))).catch(e => console.error('Audit fail:', e));
+        api.get(`/admin/telemetry?time_range=${telemetryRange}`).then(res => setTelemetry(res.data)).catch(e => console.error('Telemetry fail:', e));
+        
+        // Minor delay to ensure smooth transition
+        setTimeout(() => setLoading(false), 800);
+    }, [telemetryRange]);
 
-    const fetchTraffic = async () => {
-        try {
-            const res = await api.get('/admin/traffic');
-            setTraffic(res.data);
-        } catch (err) {
-            console.error(err);
-        }
-    };
+    useEffect(() => {
+        if (isAdmin) fetchData();
+        else setLoading(false);
+    }, [isAdmin, fetchData]);
 
     const getGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return "Good Morning";
-        if (hour < 17) return "Good Afternoon";
-        return "Good Evening";
+        const h = new Date().getHours();
+        if (h < 12) return ['Good Morning', 'fa-sun'];
+        if (h < 17) return ['Good Afternoon', 'fa-cloud-sun'];
+        if (h < 20) return ['Good Evening', 'fa-moon'];
+        return ['Good Night', 'fa-moon-stars'];
     };
+    const [greeting, greetIcon] = getGreeting();
+
+    const sparkData = [
+        { day: 'Mon', users: 3, sessions: 8 },
+        { day: 'Tue', users: 7, sessions: 12 },
+        { day: 'Wed', users: 5, sessions: 10 },
+        { day: 'Thu', users: 10, sessions: 18 },
+        { day: 'Fri', users: 8, sessions: 15 },
+        { day: 'Sat', users: 4, sessions: 6 },
+        { day: 'Sun', users: 6, sessions: 11 },
+    ];
 
     const handleCreateUser = async (e) => {
         e.preventDefault();
@@ -78,11 +160,7 @@ const Dashboard = ({ user }) => {
             await api.post('/auth/register', newUser);
             setMessage({ type: 'success', text: 'User created successfully!' });
             setNewUser({ username: '', email: '', password: '', role: 'student' });
-            setTimeout(() => {
-                setIsModalOpen(false);
-                setMessage({ type: '', text: '' });
-                fetchData();
-            }, 1000);
+            setTimeout(() => { setIsModalOpen(false); setMessage({ type: '', text: '' }); fetchData(); }, 1000);
         } catch (err) {
             setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to create user.' });
         } finally {
@@ -90,245 +168,366 @@ const Dashboard = ({ user }) => {
         }
     };
 
-    if (loading && !stats) return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-            <div className="avatar" style={{ animation: 'pulse 2s infinite', width: 80, height: 80, fontSize: '2rem' }}>PVG</div>
+    if (loading && isAdmin) return (
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '70vh', gap: '1.5rem' }}>
+            <div className="erp-loader" style={{ width: '48px', height: '48px', border: '4px solid var(--erp-border)', borderTopColor: 'var(--erp-primary)', borderRadius: '50%', animation: 'erp-spin 1s linear infinite' }}></div>
+            <p style={{ fontWeight: 600, color: 'var(--erp-text-muted)', letterSpacing: '0.05em' }}>SYNCHRONIZING TELEMETRY...</p>
         </div>
     );
 
-    const cards = [
-        { label: 'Total Users', value: stats?.total_users || 0, icon: '👥', color: 'var(--accent-primary)', path: '/users' },
-        { label: 'Active Sessions', value: stats?.active_sessions || 0, icon: '⚡', color: 'var(--accent-secondary)', path: '/audit' },
-        { label: 'System Roles', value: stats?.total_roles || 0, icon: '🛡️', color: 'var(--warning)', path: '/roles' },
-    ];
+    if (isAdmin) {
+        return (
+            <div style={{ animation: 'fadeInSlideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)', padding: '0.5rem 0' }}>
 
-    const quickActions = [
-        { label: 'Add User', desc: 'Onboard new staff/student', icon: '➕', action: () => setIsModalOpen(true), color: 'var(--accent-primary)' },
-        { label: 'Manage Roles', desc: 'Configure RBAC policies', icon: '🛡️', path: '/roles', color: 'var(--warning)' },
-        { label: 'Audit Desk', desc: 'Review system telemetry', icon: '🔍', path: '/audit', color: 'var(--accent-secondary)' },
-        { label: 'Export Data', desc: 'Snapshot system state', icon: '💾', path: '/export', color: 'var(--accent-tertiary)' },
-    ];
+                {/* ── Premium Hero ── */}
+                <div style={{
+                    marginBottom: '1.5rem', padding: '2.5rem',
+                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+                    borderRadius: '32px', color: 'white', position: 'relative', overflow: 'hidden',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    border: '1px solid rgba(255,255,255,0.05)'
+                }}>
+                    {/* Decorative Background Elements */}
+                    <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '400px', height: '400px', background: 'radial-gradient(circle, var(--erp-primary) 0%, transparent 70%)', opacity: 0.15, pointerEvents: 'none' }}></div>
+                    <div style={{ position: 'absolute', bottom: '-20%', left: '10%', width: '300px', height: '300px', background: 'radial-gradient(circle, #8b5cf6 0%, transparent 70%)', opacity: 0.1, pointerEvents: 'none' }}></div>
 
-    return (
-        <div className="dashboard-view">
-            {/* Dynamic Greeting */}
-            <header className="greeting-section">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                    <div>
-                        <div className="badge badge-admin shimmer-effect" style={{ marginBottom: '1rem' }}>
-                            {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                        </div>
-                        <h1 className="greeting-text">{getGreeting()}, {user?.username}!</h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                            Here is what's happening in the system today.
-                        </p>
-                    </div>
-                </div>
-            </header>
-
-            {/* Security Alert */}
-            {stats?.active_sessions > 10 && (
-                <div className="alert-banner">
-                    <div className="alert-content">
-                        <div className="alert-pulse"></div>
+                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '2rem' }}>
                         <div>
-                            <strong style={{ color: 'var(--error)' }}>High Activity Detected:</strong> Currently {stats.active_sessions} concurrent sessions active.
-                        </div>
-                    </div>
-                    <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }} onClick={() => navigate('/audit')}>
-                        Investigate
-                    </button>
-                </div>
-            )}
-
-            {/* Stats Cards */}
-            <div className="stats-grid">
-                {cards.map((card, i) => (
-                    <div 
-                        key={i} 
-                        className="stat-card" 
-                        style={{ animationDelay: `${i * 0.1}s` }}
-                        onClick={() => navigate(card.path)}
-                    >
-                        <div className="stat-icon-wrapper" style={{ border: `1px solid ${card.color}44`, color: card.color }}>
-                            {card.icon}
-                        </div>
-                        <div>
-                            <div className="stat-label">{card.label}</div>
-                            <div className="stat-value">{card.value}</div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Visual Analytics */}
-            <div className="chart-section">
-                <div className="chart-card">
-                    <div className="chart-header">
-                        <h3 className="chart-title">System Traffic Analysis</h3>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <span 
-                                className={`badge ${chartMode === 'live' ? 'badge-faculty' : ''}`} 
-                                onClick={() => setChartMode('live')}
-                                style={{ cursor: 'pointer', opacity: chartMode === 'live' ? 1 : 0.5 }}
-                            >
-                                Real-time
-                            </span>
-                            <span 
-                                className={`badge ${chartMode === '24h' ? 'badge-guest' : ''}`} 
-                                onClick={() => setChartMode('24h')}
-                                style={{ cursor: 'pointer', opacity: chartMode === '24h' ? 1 : 0.5 }}
-                            >
-                                Last 24h
-                            </span>
-                        </div>
-                    </div>
-                    <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer>
-                            <AreaChart data={traffic.length > 0 ? traffic : liveData}>
-                                <defs>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                <XAxis dataKey="time" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                                <Tooltip 
-                                    contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
-                                    itemStyle={{ color: 'var(--accent-primary)' }}
-                                />
-                                <Area type="monotone" dataKey="value" stroke="var(--accent-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-            </div>
-
-            {/* Quick Actions Grid */}
-            <div className="quick-actions-container">
-                <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Management Shortcuts</h3>
-                <div className="quick-actions-grid">
-                    {quickActions.map((action, i) => (
-                        <div key={i} className="action-card" onClick={action.action ? action.action : () => navigate(action.path)}>
-                            <div className="action-icon" style={{ color: action.color, background: `${action.color}15` }}>
-                                {action.icon}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', fontSize: '0.9rem', fontWeight: 500, opacity: 0.7 }}>
+                                <i className={`fa-solid ${greetIcon}`} style={{ color: 'var(--erp-accent)' }}></i>
+                                <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'white', opacity: 0.3 }}></span>
+                                <span>System Status: <span style={{ color: '#4ade80', fontWeight: 700 }}>Optimal</span></span>
                             </div>
-                            <div>
-                                <div className="action-label">{action.label}</div>
-                                <div className="action-desc">{action.desc}</div>
+                            <h1 style={{ fontSize: '3rem', fontWeight: 800, margin: '0 0 0.5rem', letterSpacing: '-0.04em', background: 'linear-gradient(to right, #fff, #cbd5e1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                                {greeting}, Admin
+                            </h1>
+                            <p style={{ opacity: 0.6, fontSize: '1.1rem', fontWeight: 400, margin: 0, maxWidth: '600px', lineHeight: 1.6 }}>
+                                Welcome to the PVG COET&M Command Center. Your administrative oversight covers <strong>{stats?.total_users || 0} enrolled users</strong> across <strong>{stats?.total_roles || 0} active RBAC policies</strong>.
+                            </p>
+                        </div>
+
+                        {/* Glassmorphism Live Clock */}
+                        <div style={{ 
+                            background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)', 
+                            borderRadius: '24px', padding: '1.5rem 2.5rem', textAlign: 'center', 
+                            border: '1px solid rgba(255,255,255,0.08)', minWidth: '240px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+                        }}>
+                            <div style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '0.02em', lineHeight: 1, fontFamily: 'var(--erp-font-mono)' }}>
+                                <LiveClock />
+                            </div>
+                            <div style={{ fontSize: '0.8rem', opacity: 0.5, marginTop: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>IST · Server Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '1.5rem', alignItems: 'start' }}>
+                    
+                    {/* LEFT COLUMN */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+                        {/* Modern Stat Cards */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+                            <PremiumStatCard
+                                icon="fa-users" color="#3b82f6"
+                                value={stats?.total_users || 0} label="Total Users"
+                                trend="+12.5%" trendUp={true}
+                                onClick={() => navigate('/users')}
+                            />
+                            <PremiumStatCard
+                                icon="fa-fingerprint" color="#10b981"
+                                value={stats?.active_sessions || 0} label="Live Sessions"
+                                trend="System Active" trendUp={true}
+                                onClick={() => navigate('/audit')}
+                            />
+                            <PremiumStatCard
+                                icon="fa-shield-halved" color="#8b5cf6"
+                                value={stats?.total_roles || 0} label="RBAC Policies"
+                                trend="Secured" trendUp={true}
+                                onClick={() => navigate('/roles')}
+                            />
+                        </div>
+
+                        {/* Charts Row */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1.5rem' }}>
+                            <div className="erp-card" style={{ borderRadius: '28px', border: '1px solid var(--erp-border)', background: 'var(--erp-surface)' }}>
+                                <div className="erp-card__header" style={{ padding: '1.75rem 2rem 1rem' }}>
+                                    <div>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--erp-primary)' }}>Registration Telemetry</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--erp-text-muted)', marginTop: '0.25rem' }}>Historical pattern of user on-boarding</div>
+                                    </div>
+                                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '12px', padding: '4px' }}>
+                                        {[
+                                            { label: '24H', value: '24h' },
+                                            { label: '7D', value: '7d' },
+                                            { label: '30D', value: '30d' }
+                                        ].map(r => (
+                                            <button key={r.value} onClick={() => setTelemetryRange(r.value)}
+                                                style={{ 
+                                                    background: telemetryRange === r.value ? 'white' : 'transparent', 
+                                                    color: telemetryRange === r.value ? 'var(--erp-primary)' : 'var(--erp-text-muted)', 
+                                                    border: 'none', borderRadius: '10px', padding: '0.4rem 0.9rem', fontSize: '0.72rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s',
+                                                    boxShadow: telemetryRange === r.value ? '0 4px 12px rgba(0,0,0,0.08)' : 'none'
+                                                }}>
+                                                {r.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="erp-card__body" style={{ padding: '1rem 1.5rem 1.5rem' }}>
+                                    <ResponsiveContainer width="100%" height={260}>
+                                        <AreaChart data={telemetry.length ? telemetry : sparkData}>
+                                            <defs>
+                                                <linearGradient id="pvgGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="var(--erp-primary)" stopOpacity={0.15}/>
+                                                    <stop offset="95%" stopColor="var(--erp-primary)" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,0,0,0.03)" vertical={false} />
+                                            <XAxis dataKey={telemetryRange === '24h' ? 'time' : 'day'} axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 600, fill: '#94a3b8' }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 600, fill: '#94a3b8' }} />
+                                            <Tooltip content={<CustomTooltip />} />
+                                            <Area type="monotone" dataKey="users" stroke="var(--erp-primary)" strokeWidth={4} fillOpacity={1} fill="url(#pvgGradient)" animationDuration={1500} />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            <div className="erp-card" style={{ borderRadius: '28px', border: '1px solid var(--erp-border)' }}>
+                                <div className="erp-card__header" style={{ padding: '1.75rem 2rem 1rem' }}>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#8b5cf6' }}>Login Velocity</div>
+                                </div>
+                                <div className="erp-card__body" style={{ padding: '1rem 1.5rem 1.5rem' }}>
+                                    <ResponsiveContainer width="100%" height={260}>
+                                        <BarChart data={telemetry.length ? telemetry : sparkData} barSize={12}>
+                                            <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,0,0,0.03)" vertical={false} />
+                                            <XAxis dataKey={telemetryRange === '24h' ? 'time' : 'day'} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
+                                            <Bar dataKey="sessions" fill="#8b5cf6" radius={[6, 6, 0, 0]} animationDuration={1800} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
                         </div>
-                    ))}
-                </div>
-            </div>
 
-            {/* Activities & Health Feed */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '2rem', marginTop: '3rem' }}>
-                <div className="card" onClick={() => navigate('/audit')} style={{ cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                        <h3 style={{ fontSize: '1.25rem' }}>Recent System Activities</h3>
-                        <div className="badge badge-admin shimmer-effect">Live Telemetry</div>
+                        {/* Recent Activity List */}
+                        <div className="erp-card" style={{ borderRadius: '28px' }}>
+                            <div className="erp-card__header" style={{ padding: '1.5rem 2rem' }}>
+                                <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--erp-dark)' }}>Security Audit Trail</div>
+                                <button className="erp-btn erp-btn--outline erp-btn--sm" style={{ borderRadius: '12px' }} onClick={() => navigate('/audit')}>Full Report</button>
+                            </div>
+                            <div className="erp-card__body" style={{ padding: '0 1rem 1rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 1fr', gap: '1rem' }}>
+                                    {audit.length > 0 ? audit.slice(0, 4).map((log, i) => (
+                                        <div key={i} style={{ 
+                                            background: 'rgba(0,0,0,0.02)', padding: '1.25rem', borderRadius: '20px', display: 'flex', gap: '1rem', alignItems: 'center', 
+                                            border: '1px solid transparent', transition: 'all 0.3s'
+                                        }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--erp-border)'; e.currentTarget.style.background = 'white'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.05)'; }}>
+                                            <div style={{ 
+                                                width: '46px', height: '46px', borderRadius: '14px', flexShrink: 0, 
+                                                background: log.status === 'Success' ? '#dcfce7' : '#fee2e2',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                            }}>
+                                                <i className={`fa-solid ${log.status === 'Success' ? 'fa-shield-check' : 'fa-triangle-exclamation'}`} 
+                                                   style={{ color: log.status === 'Success' ? '#16a34a' : '#ef4444', fontSize: '1.2rem' }}></i>
+                                            </div>
+                                            <div style={{ minWidth: 0, flex: 1 }}>
+                                                <div style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{log.user}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--erp-text-muted)', marginTop: '0.2rem' }}>{log.ip_address} · {log.timestamp}</div>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--erp-text-muted)' }}>
+                                            No audit telemetry available.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="table-wrapper">
-                        <table style={{ borderSpacing: '0 8px', borderCollapse: 'separate' }}>
-                            <thead>
-                                <tr style={{ borderBottom: 'none' }}>
-                                    <th style={{ padding: '0 1rem' }}>Subject</th>
-                                    <th style={{ padding: '0 1rem' }}>Action</th>
-                                    <th style={{ padding: '0 1rem' }}>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {audit.map((log, i) => (
-                                    <tr key={i} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 12 }}>
-                                        <td style={{ padding: '1rem', border: 'none', borderRadius: '12px 0 0 12px' }}>
-                                            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{log.user.split('@')[0]}</div>
-                                        </td>
-                                        <td style={{ padding: '1rem', border: 'none' }}>
-                                            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: log.action.includes('Login') ? 'var(--accent-secondary)' : 'var(--accent-tertiary)' }}>
-                                                {log.action.toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '1rem', border: 'none', borderRadius: '0 12px 12px 0', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                                            {log.timestamp.split(' ')[1]}
-                                        </td>
-                                    </tr>
+
+                    {/* RIGHT COLUMN */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'sticky', top: '2rem' }}>
+                        
+                        {/* Interactive Calendar */}
+                        <div className="erp-card" style={{ borderRadius: '28px', overflow: 'hidden' }}>
+                            <div style={{ padding: '1.75rem 2rem 0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <div style={{ width: '40px', height: '40px', background: 'var(--erp-surface-alt)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <i className="fa-regular fa-calendar-star" style={{ color: 'var(--erp-primary)', fontSize: '1.1rem' }}></i>
+                                </div>
+                                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--erp-dark)' }}>Academic Cycle</span>
+                            </div>
+                            <MiniCalendar />
+                            <div style={{ padding: '0 2rem 2rem' }}>
+                                <div style={{ fontWeight: 800, fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1.25rem' }}>Upcoming Node Events</div>
+                                {[
+                                    { color: '#3b82f6', label: 'Security Patch V2.4', time: 'Tomorrow' },
+                                    { color: '#8b5cf6', label: 'Faculty Role Rotation', time: 'Apr 25' },
+                                    { color: '#10b981', label: 'Semester Sync', time: 'May 02' }
+                                ].map((ev, i) => (
+                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1rem' }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: ev.color }}></div>
+                                        <div style={{ flex: 1, fontWeight: 600, fontSize: '0.88rem' }}>{ev.label}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 700 }}>{ev.time}</div>
+                                    </div>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div className="card">
-                    <h3 style={{ fontSize: '1.25rem', marginBottom: '2rem' }}>System Health</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                        <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Server Load</span>
-                                <span style={{ fontWeight: 800 }}>{stats?.active_sessions > 10 ? 'HIGH' : 'OPTIMAL'}</span>
-                            </div>
-                            <div className="progress-bar">
-                                <div className="progress-fill shimmer-effect" style={{ width: stats?.active_sessions > 10 ? '85%' : '35%', background: stats?.active_sessions > 10 ? 'var(--error)' : 'var(--accent-secondary)' }}></div>
                             </div>
                         </div>
-                        <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>DB Connectivity</span>
-                                <span style={{ fontWeight: 800 }}>99.9%</span>
+
+                        {/* System Health Card */}
+                        <div className="erp-card" style={{ borderRadius: '28px', background: 'linear-gradient(135deg, #1e293b, #0f172a)', color: 'white', padding: '2rem', border: 'none', position: 'relative', overflow: 'hidden' }}>
+                            <div style={{ position: 'absolute', top: '-20%', right: '-20%', width: '150px', height: '150px', background: '#3b82f6', filter: 'blur(60px)', opacity: 0.3 }}></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                                <div>
+                                    <div style={{ fontWeight: 800, fontSize: '1.2rem', marginBottom: '0.25rem' }}>Node Status</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Infrastructure Monitor</div>
+                                </div>
+                                <div style={{ padding: '0.5rem', background: 'rgba(74, 222, 128, 0.1)', color: '#4ade80', borderRadius: '10px', fontSize: '0.9rem' }}>
+                                    <i className="fa-solid fa-bolt-lightning"></i>
+                                </div>
                             </div>
-                            <div className="progress-bar">
-                                <div className="progress-fill shimmer-effect" style={{ width: '99.9%', background: 'var(--accent-secondary)' }}></div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {[
+                                    { name: 'Auth Server', status: 'Healthy', val: 99 },
+                                    { name: 'RBAC Engine', status: 'Healthy', val: 100 },
+                                    { name: 'Database', status: 'Healthy', val: 98 }
+                                ].map((s, i) => (
+                                    <div key={i}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.4rem', fontWeight: 600 }}>
+                                            <span style={{ color: '#94a3b8' }}>{s.name}</span>
+                                            <span style={{ color: '#4ade80' }}>{s.status}</span>
+                                        </div>
+                                        <div style={{ background: 'rgba(255,255,255,0.05)', height: '4px', borderRadius: '2px' }}>
+                                            <div style={{ background: 'linear-gradient(to right, #3b82f6, #8b5cf6)', width: `${s.val}%`, height: '100%', borderRadius: '2px' }}></div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        );
+    }
 
-            {/* Quick Add User Modal */}
-            {isModalOpen && (
-                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h2 style={{ marginBottom: '1.5rem' }}>Quick Add User</h2>
-                        <form onSubmit={handleCreateUser}>
-                            <div className="form-group">
-                                <label>Username</label>
-                                <input type="text" className="form-input" required value={newUser.username} onChange={e => setNewUser({...newUser, username: e.target.value})} />
-                            </div>
-                            <div className="form-group">
-                                <label>Email Address</label>
-                                <input type="email" className="form-input" required value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} />
-                            </div>
-                            <div className="form-group">
-                                <label>Initial Password</label>
-                                <input type="password" className="form-input" required value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} />
-                            </div>
-                            <div className="form-group">
-                                <label>Role Assignment</label>
-                                <select className="form-input" value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} style={{ background: 'var(--bg-dark)' }}>
-                                    <option value="student">Student</option>
-                                    <option value="faculty">Faculty</option>
-                                    <option value="hod">HOD</option>
-                                    <option value="accountant">Accountant</option>
-                                    <option value="vice_principal">Vice Principal</option>
-                                </select>
-                            </div>
-                            {message.text && (
-                                <div style={{ padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', background: message.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: message.type === 'error' ? 'var(--error)' : 'var(--success)', fontSize: '0.85rem', fontWeight: 600 }}>
-                                    {message.text}
+    /* Student/Faculty View */
+    return (
+        <div style={{ animation: 'fadeInSlideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
+            <div style={{
+                marginBottom: '2rem', padding: '3rem',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                borderRadius: '32px', color: 'white', position: 'relative', overflow: 'hidden',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)'
+            }}>
+                <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: '3rem', alignItems: 'center' }}>
+                    <div style={{
+                        width: '100px', height: '100px', borderRadius: '28px', background: 'rgba(255,255,255,0.05)',
+                        backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '3rem', fontWeight: 800, flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                        {user?.username?.[0]?.toUpperCase()}
+                    </div>
+                    <div>
+                        <div style={{ fontSize: '1rem', opacity: 0.6, marginBottom: '0.5rem', fontWeight: 500 }}>{greeting}</div>
+                        <h1 style={{ fontSize: '3rem', fontWeight: 800, margin: '0 0 0.5rem', letterSpacing: '-0.03em' }}>
+                            {user?.full_name || user?.username}
+                        </h1>
+                        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                            <span style={{ background: 'var(--erp-primary)', color: 'white', borderRadius: '10px', padding: '0.4rem 1rem', fontSize: '0.85rem', fontWeight: 800, letterSpacing: '0.05em' }}>
+                                {user?.role?.toUpperCase()}
+                            </span>
+                            <span style={{ opacity: 0.6, fontSize: '0.95rem' }}>
+                                <i className="fa-solid fa-envelope" style={{ marginRight: '0.6rem' }}></i>{user?.email}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <i className="fa-solid fa-user-graduate" style={{ position: 'absolute', right: '-3rem', bottom: '-4rem', fontSize: '20rem', opacity: 0.03 }}></i>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '2rem' }}>
+                <div className="erp-card" style={{ borderRadius: '28px' }}>
+                    <div className="erp-card__header" style={{ padding: '2rem 2.5rem' }}>
+                        <div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--erp-primary)' }}>System Privileges</div>
+                            <div style={{ fontSize: '0.9rem', color: 'var(--erp-text-muted)', marginTop: '0.4rem' }}>{user?.permissions?.length || 0} active cross-module capabilities</div>
+                        </div>
+                    </div>
+                    <div className="erp-card__body" style={{ padding: '0 2.5rem 2.5rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                            {user?.permissions?.length > 0 ? user.permissions.map(p => (
+                                <span key={p} style={{
+                                    background: 'var(--erp-surface-alt)', color: 'var(--erp-text)',
+                                    border: '1px solid var(--erp-border)', borderRadius: '12px',
+                                    padding: '0.6rem 1.25rem', fontSize: '0.85rem', fontWeight: 700,
+                                    transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.6rem'
+                                }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--erp-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}>
+                                    <i className="fa-solid fa-circle-check" style={{ color: '#10b981', fontSize: '0.8rem' }}></i>
+                                    {p.replace(/_/g, ' ').toUpperCase()}
+                                </span>
+                            )) : (
+                                <div style={{ textAlign: 'center', width: '100%', padding: '4rem', background: 'var(--erp-surface-alt)', borderRadius: '20px' }}>
+                                    <i className="fa-solid fa-lock-keyhole" style={{ fontSize: '3rem', opacity: 0.1, display: 'block', marginBottom: '1.25rem' }}></i>
+                                    No direct permissions listed.
                                 </div>
                             )}
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                                <button type="button" className="btn" style={{ flex: 1, background: 'rgba(255,255,255,0.05)' }} onClick={() => setIsModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={submitting}>{submitting ? 'Creating...' : 'Create Account'}</button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    <div className="erp-card" style={{ borderRadius: '28px' }}>
+                        <div style={{ padding: '1.5rem 2rem 0', fontWeight: 800, fontSize: '0.9rem', borderBottom: '1px solid var(--erp-border)', paddingBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ width: '36px', height: '36px', background: 'rgba(26,86,219,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <i className="fa-solid fa-calendar" style={{ color: 'var(--erp-primary)', fontSize: '1rem' }}></i>
+                            </div>
+                            Academic Timeline
+                        </div>
+                        <MiniCalendar />
+                    </div>
+                    <div className="erp-card" style={{ borderRadius: '28px', background: 'var(--erp-surface-alt)', border: '1px solid var(--erp-border)', padding: '2rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                            <div style={{ width: '50px', height: '50px', background: '#dcfce7', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <i className="fa-solid fa-shield-halved" style={{ color: '#16a34a', fontSize: '1.5rem' }}></i>
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>Active Session</div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--erp-text-muted)' }}>Secure Line · {new Date().getFullYear()}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
+
+/* ── New Premium Stat Card Component ── */
+const PremiumStatCard = ({ icon, color, value, label, trend, trendUp, onClick }) => (
+    <div onClick={onClick} style={{
+        borderRadius: '28px', padding: '1.75rem', position: 'relative', overflow: 'hidden',
+        background: 'var(--erp-surface)', border: '1px solid var(--erp-border)',
+        cursor: onClick ? 'pointer' : 'default', transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+    }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.06)'; e.currentTarget.style.borderColor = color + '40'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.02)'; e.currentTarget.style.borderColor = 'var(--erp-border)'; }}
+    >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+            <div style={{ width: '52px', height: '52px', background: color + '12', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <i className={`fa-solid ${icon}`} style={{ fontSize: '1.4rem', color: color }}></i>
+            </div>
+            <span style={{ background: trendUp ? '#dcfce7' : '#fee2e2', color: trendUp ? '#16a34a' : '#ef4444', borderRadius: '10px', padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: 800 }}>
+                {trend}
+            </span>
+        </div>
+        <div style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--erp-dark)', lineHeight: 1, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>{value}</div>
+        <div style={{ fontWeight: 700, color: 'var(--erp-text-muted)', fontSize: '1rem' }}>{label}</div>
+        
+        {/* Decorative Background Icon */}
+        <i className={`fa-solid ${icon}`} style={{ position: 'absolute', right: '-1rem', bottom: '-1rem', fontSize: '7rem', color: color, opacity: 0.03, pointerEvents: 'none' }}></i>
+    </div>
+);
 
 export default Dashboard;
