@@ -26,40 +26,53 @@ A professional-grade authentication, authorization, and administrative suite bui
 
 ## 🚀 Unified Quick Start
 
-Launch the entire ecosystem (Backend + User App + Admin App) with a single command:
+Launch the entire ecosystem (5 Services: Backends + Frontend Portals) with a single command:
 
-```bash
-# 1. Install root dependencies
-npm install
-
-# 2. Start all services concurrently
-npm run dev
+```powershell
+# Run the professional startup sequence
+.\start_erp.bat
 ```
 
-### Running Services Independently
-If you need to start services separately, use the following commands:
+This will automatically clean up ghost processes, free the required ports, and launch:
+1. **Auth Backend** (Port 8000)
+2. **Admission Backend** (Port 8001)
+3. **Authentication Admin Dashboard** (Port 5173)
+4. **Admission Portal** (Port 5174)
+5. **Student User Login/Profile** (Port 5175)
 
-- **Backend (FastAPI)**:
-  ```bash
-  cd backend
-  venv\Scripts\activate   # Activate virtualenv (Windows)
-  uvicorn main:app --reload --port 8000
-  ```
-- **User Portal (Registration)**:
-  ```bash
-  cd frontend/user
-  npm run dev
-  ```
-- **Admin Portal (Management)**:
-  ```bash
-  cd frontend/admin
-  npm run dev
-  ```
+---
 
-### Access Points:
-- **Admin Dashboard**: [http://localhost:5174](http://localhost:5174) (Login: `admin` / `admin`)
-- **User Portal**: [http://localhost:5173](http://localhost:5173)
+### Your Dashboard Addresses:
+
+- **Authentication Admin (Users, Roles, RBAC)**: [http://localhost:5173](http://localhost:5173)
+- **Admission Portal (Applications, Brochures)**: [http://localhost:5174](http://localhost:5174)
+- **Student User Login (Personal Profile)**: [http://localhost:5175](http://localhost:5175)
 - **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+## 🗄️ Database Architecture (PostgreSQL)
+
+The system uses a unified **PostgreSQL** database named `pvg_auth` to handle both authentication and the integrated admission module.
+
+### 1. Initialization Logic
+The core schema and security policies are defined in [setup_auth_tables.sql](file:///d:/Merging_auth_&_admission/setup_auth_tables.sql). This file performs:
+- **Schema Creation**: Tables for RBAC, Users, Documents, and Login Logs.
+- **Module Seeding**: Populates 10 institutional modules (Admission, Exam, Attendance, etc.).
+- **Smart Permissioning**: Dynamically generates `VIEW`, `CREATE`, `EDIT`, and `APPROVE` permissions for every system feature.
+
+### 2. Relational Security Model (RBAC)
+The system follows a strict hierarchical permission model:
+- **Modules**: High-level functional areas (e.g., Admission & Enrollment).
+- **Features**: Specific tools within a module (e.g., Upload Documents).
+- **Permissions**: Atomic actions mapped to features (e.g., Upload Documents - CREATE).
+- **Role Permissions**: Maps institutional roles (`admin`, `hod`, `student`) to specific permissions.
+
+### 3. Core Tables Summary:
+- `users`: Stores emails and secure Argon2 password hashes.
+- `roles`: Institutional identities with unique descriptions.
+- `documents`: Tracks file paths, verification status, and ownership for the Admission module.
+- `login_log`: Real-time audit trail of all security events.
 
 ---
 

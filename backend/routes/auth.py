@@ -85,7 +85,13 @@ def login(
     # Access Token
     access_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.email, "role": primary_role},
+        data={
+            "sub": user.email, 
+            "role": primary_role,
+            "user_id": user.user_id,
+            "username": user.username,
+            "full_name": user.full_name
+        },
         expires_delta=access_expires,
     )
 
@@ -246,7 +252,13 @@ def refresh_token(payload: schemas.TokenRefreshRequest, db: Session = Depends(ge
     # 4. Generate NEW access and refresh tokens (Rotation)
     access_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     new_access_token = create_access_token(
-        data={"sub": user.email, "role": primary_role},
+        data={
+            "sub": user.email, 
+            "role": primary_role,
+            "user_id": user.user_id,
+            "username": user.username,
+            "full_name": user.full_name
+        },
         expires_delta=access_expires,
     )
     

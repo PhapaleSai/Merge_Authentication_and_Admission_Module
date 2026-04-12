@@ -182,9 +182,9 @@ const Dashboard = () => {
                 {/* ── Premium Hero ── */}
                 <div style={{
                     marginBottom: '1.5rem', padding: '2.5rem',
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
-                    borderRadius: '32px', color: 'white', position: 'relative', overflow: 'hidden',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    background: 'linear-gradient(135deg, #0c1e47 0%, #0d2260 50%, #0c356a 100%)',
+                    borderRadius: '24px', color: 'white', position: 'relative', overflow: 'hidden',
+                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
                     border: '1px solid rgba(255,255,255,0.05)'
                 }}>
                     {/* Decorative Background Elements */}
@@ -209,10 +209,10 @@ const Dashboard = () => {
 
                         {/* Glassmorphism Live Clock */}
                         <div style={{ 
-                            background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)', 
-                            borderRadius: '24px', padding: '1.5rem 2.5rem', textAlign: 'center', 
-                            border: '1px solid rgba(255,255,255,0.08)', minWidth: '240px',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+                            background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(30px)', 
+                            borderRadius: '20px', padding: '1.5rem 2.5rem', textAlign: 'center', 
+                            border: '1px solid rgba(255,255,255,0.1)', minWidth: '240px',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
                         }}>
                             <div style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '0.02em', lineHeight: 1, fontFamily: 'var(--erp-font-mono)' }}>
                                 <LiveClock />
@@ -257,7 +257,7 @@ const Dashboard = () => {
                                         <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--erp-primary)' }}>Registration Telemetry</div>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--erp-text-muted)', marginTop: '0.25rem' }}>Historical pattern of user on-boarding</div>
                                     </div>
-                                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '12px', padding: '4px' }}>
+                                    <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '12px', padding: '4px', border: '1px solid #e2e8f0' }}>
                                         {[
                                             { label: '24H', value: '24h' },
                                             { label: '7D', value: '7d' },
@@ -288,7 +288,7 @@ const Dashboard = () => {
                                             <XAxis dataKey={telemetryRange === '24h' ? 'time' : 'day'} axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 600, fill: '#94a3b8' }} dy={10} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 600, fill: '#94a3b8' }} />
                                             <Tooltip content={<CustomTooltip />} />
-                                            <Area type="monotone" dataKey="users" stroke="var(--erp-primary)" strokeWidth={4} fillOpacity={1} fill="url(#pvgGradient)" animationDuration={1500} />
+                                            <Area type="monotone" dataKey="users" stroke="#0c1e47" strokeWidth={4} fillOpacity={1} fill="url(#pvgGradient)" animationDuration={1500} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>

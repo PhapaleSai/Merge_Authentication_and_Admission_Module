@@ -62,7 +62,15 @@ const AdminDashboard = () => {
           </h1>
           <p style={{ color: '#888', marginTop: '0.5rem' }}>Management & RBAC Capabilities</p>
         </div>
-        <button className="btn-logout" onClick={() => navigate('/welcome')}>Back to Home</button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button className="btn-logout" onClick={() => navigate('/welcome')} style={{ background: '#333' }}>Back to Home</button>
+          <button className="btn-logout" onClick={() => {
+              const token = localStorage.getItem('token');
+              window.location.href = `http://localhost:5174/admin/dashboard?token=${token}`;
+          }} style={{ background: '#4a9eff', color: '#fff', border: 'none', cursor: 'pointer' }}>
+              Launch Admission Admin <i className="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
       </header>
 
       <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>

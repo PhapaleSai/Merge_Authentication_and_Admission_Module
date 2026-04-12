@@ -1,37 +1,31 @@
 :root {
-  /* Dark Mode (Default) */
-  --bg-dark: #060912;
-  --sidebar-bg: rgba(10, 15, 30, 0.95);
-  --card-bg: rgba(20, 25, 45, 0.6);
-  --accent-primary: #6366f1;
-  --accent-secondary: #10b981;
-  --accent-tertiary: #f43f5e;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #475569;
-  --border: rgba(255, 255, 255, 0.06);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --success: #10b981;
-  --error: #ef4444;
-  --warning: #f59e0b;
-  --info: #0ea5e9;
+  /* Premium Dark/Navy Palette */
+  --erp-bg: #f8fafc;
+  --erp-sidebar-bg: #0c1e47; /* Deeper Navy */
+  --erp-surface: #ffffff;
+  --erp-surface-alt: #f1f5f9;
+  --erp-border: #e2e8f0;
+  --erp-text: #1e293b;
+  --erp-text-muted: #64748b;
+  --erp-primary: #0f172a; /* Main accent */
+  --erp-accent: #3b82f6;
+  --erp-success: #10b981;
+  --erp-danger: #ef4444;
+  --erp-warning: #f59e0b;
+  --erp-glow-primary: rgba(15, 23, 42, 0.1);
   --sidebar-width: 280px;
-  --transition-speed: 0.3s;
 }
 
-[data-theme='light'] {
-  --bg-dark: #f1f5f9;
-  --sidebar-bg: #ffffff;
-  --card-bg: #ffffff;
-  --accent-primary: #4f46e5;
-  --accent-secondary: #10b981;
-  --accent-tertiary: #e11d48;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --border: rgba(0, 0, 0, 0.08);
-  --glass-border: rgba(0, 0, 0, 0.12);
-  --sidebar-shadow: 10px 0 30px rgba(0, 0, 0, 0.05);
+[data-erp-theme='dark'] {
+  --erp-bg: #060912;
+  --erp-sidebar-bg: #0a1128;
+  --erp-surface: #0f172a;
+  --erp-surface-alt: #1e293b;
+  --erp-border: rgba(255, 255, 255, 0.08);
+  --erp-text: #f8fafc;
+  --erp-text-muted: #94a3b8;
+  --erp-primary: #3b82f6;
+  --erp-glow-primary: rgba(59, 130, 246, 0.2);
 }
 
 @keyframes fadeIn {
@@ -464,26 +458,76 @@ td {
   border-radius: 10px;
 }
 
-/* ── Login Page ── */
-.login-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background: radial-gradient(circle at center, #111827 0%, #060912 100%);
-  padding: 2rem;
+/* ── Premium Split Login ── */
+.erp-auth-page {
+    display: flex;
+    min-height: 100vh;
+    background: #f8fafc;
 }
 
-.login-card {
-  width: 100%;
-  max-width: 440px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 28px;
-  padding: 3.5rem;
-  backdrop-filter: blur(40px);
-  box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.6);
-  animation: fadeIn 0.8s ease-out;
+.erp-auth-page__brand {
+    flex: 0 0 32%;
+    background: linear-gradient(180deg, #0c1e47 0%, #0d2260 50%, #0c356a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.erp-auth-page__brand::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    right: -100px;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+}
+
+.erp-auth-page__form {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-image: radial-gradient(circle at 70% 30%, rgba(203, 213, 225, 0.2) 0%, transparent 70%);
+}
+
+.erp-auth-box {
+    width: 100%;
+    max-width: 480px;
+    padding: 3.5rem;
+    background: white;
+    border-radius: 32px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f5f9;
+}
+
+.glass-effect {
+    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.erp-auth-box__header {
+    text-align: left;
+    margin-bottom: 2.5rem;
+}
+
+.erp-auth-box__header h2 {
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
+
+.glow-btn:hover {
+    box-shadow: 0 0 20px var(--erp-glow-primary);
+}
+
+.animate-premium {
+    animation: fadeInSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .login-header {

@@ -60,11 +60,11 @@ const Login = () => {
                         justifyContent: 'center', 
                         padding: '1.5rem',
                         marginBottom: '2rem',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.3), 0 0 20px rgba(15, 66, 124, 0.4)',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
                         border: '4px solid rgba(255,255,255,0.1)'
                     }}>
                         <img 
-                            src="/assets/wordmark.jpg" 
+                            src="/assets/pvg_logo.png" 
                             alt="PVG Logo" 
                             style={{ 
                                 width: '100%', 
@@ -83,7 +83,7 @@ const Login = () => {
             </div>
 
             <div className="erp-auth-page__form">
-                <div className="erp-auth-box glass-effect animate-premium" style={{ animationDelay: '0.1s' }}>
+                <div className="erp-auth-box animate-premium" style={{ animationDelay: '0.1s' }}>
                     <div className="erp-auth-box__header">
                         <h2 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Welcome Back</h2>
                         <p style={{ marginTop: '0.5rem', opacity: 0.6 }}>Please sign in to your campus account</p>
@@ -106,8 +106,8 @@ const Login = () => {
                                     type="text"
                                     name="username"
                                     className="erp-form-control"
-                                    style={{ paddingLeft: '3.2rem', height: '56px', borderRadius: '16px' }}
-                                    placeholder="Username or Staff Email"
+                                    style={{ paddingLeft: '3.2rem', height: '56px', borderRadius: '16px', color: '#0f172a', background: '#f8fafc', border: '1.5px solid #e2e8f0' }}
+                                    placeholder="admin"
                                     value={credentials.username}
                                     onChange={handleChange}
                                     required
@@ -124,8 +124,8 @@ const Login = () => {
                                     type="password"
                                     name="password"
                                     className="erp-form-control"
-                                    style={{ paddingLeft: '3.2rem', height: '56px', borderRadius: '16px' }}
-                                    placeholder="••••••••"
+                                    style={{ paddingLeft: '3.2rem', height: '56px', borderRadius: '16px', color: '#0f172a', background: '#f8fafc', border: '1.5px solid #e2e8f0' }}
+                                    placeholder="•••••"
                                     value={credentials.password}
                                     onChange={handleChange}
                                     required
@@ -141,9 +141,10 @@ const Login = () => {
                                 marginTop: '1.5rem', 
                                 height: '56px', 
                                 borderRadius: '16px',
-                                fontSize: '1rem',
+                                fontSize: '1.1rem',
                                 fontWeight: 700,
-                                boxShadow: '0 10px 20px -5px var(--erp-glow-primary)'
+                                background: '#0c1e47',
+                                color: 'white'
                             }} 
                             disabled={loading}
                         >
@@ -153,7 +154,7 @@ const Login = () => {
 
                     <div className="erp-auth-box__footer" style={{ textAlign: 'center', marginTop: '2.5rem', fontSize: '0.9rem' }}>
                         <span style={{ opacity: 0.6 }}>New to the portal?</span> {' '}
-                        <Link to="/signup" style={{ color: 'var(--erp-primary)', fontWeight: 700, textDecoration: 'none' }}>Create Account</Link>
+                        <Link to="/signup" style={{ color: '#0c1e47', fontWeight: 700, textDecoration: 'none' }}>Create Account</Link>
                     </div>
                 </div>
             </div>

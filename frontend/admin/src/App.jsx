@@ -203,6 +203,34 @@ function Layout({ children }) {
                         </div>
                         <SidebarLink to="/audit" icon="fa-clipboard-list" label="Audit Log" iconColor="#fbbf24" />
                         <SidebarLink to="/export" icon="fa-file-export" label="Export Hub" iconColor="#f87171" />
+                        
+                        <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', padding: '1rem 0.75rem 0.4rem' }}>
+                            Integrations
+                        </div>
+                        <a href="http://localhost:5174/admin/dashboard" style={{ textDecoration: 'none' }}>
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                padding: '0.6rem 0.75rem', borderRadius: '12px', marginBottom: '2px',
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                cursor: 'pointer', transition: 'all 0.2s',
+                            }}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'translateX(4px)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.transform = 'none'; }}
+                            >
+                                <div style={{
+                                    width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0,
+                                    background: 'rgba(255,255,255,0.1)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                    <i className="fa-solid fa-graduation-cap" style={{ fontSize: '0.8rem', color: '#fbbf24' }}></i>
+                                </div>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white' }}>
+                                    Admission Module
+                                </span>
+                                <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', marginLeft: 'auto' }}></i>
+                            </div>
+                        </a>
                     </>
                 )}
             </nav>
@@ -261,10 +289,10 @@ function Layout({ children }) {
                     <button className="erp-topbar__btn" onClick={() => window.ERP?.Sidebar?.toggle?.()} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--erp-text)', padding: '0 1rem' }}>
                         <i className="fa-solid fa-bars"></i>
                     </button>
-                    <nav className="erp-topbar__breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', color: 'var(--erp-text-muted)' }}>
-                        <Link to="/dashboard" style={{ textDecoration: 'none', color: 'inherit' }}>Portal</Link>
-                        <span>/</span>
-                        <span style={{ color: 'var(--erp-primary)', fontWeight: 700 }}>{getPageTitle()}</span>
+                    <nav className="erp-topbar__breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.85rem', color: 'var(--erp-text-muted)' }}>
+                        <Link to="/dashboard" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 500 }}>Portal</Link>
+                        <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.6rem', opacity: 0.5 }}></i>
+                        <span style={{ color: '#0c1e47', fontWeight: 700 }}>{getPageTitle()}</span>
                     </nav>
                 </div>
 
