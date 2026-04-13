@@ -1,5 +1,6 @@
 # PVG College Auth & Enterprise Management System 🎓
 
+Output video recorder on 14 April 2026 link :- https://drive.google.com/file/d/13xhAvIcI0Y50rWUNkmtzHYa-e37PuFrp/view?usp=sharing
 A professional-grade authentication, authorization, and administrative suite built for **PVG College of Science**.
 
 **Technology Stack:** React (Vite) · FastAPI · PostgreSQL · SQLAlchemy · Glassmorphism UI
