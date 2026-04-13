@@ -171,37 +171,50 @@ async def finalize_application(db: AsyncSession, application_id: int, user_id: i
     # 2. Check and SELF-HEAL for Mandatory Documents
     from app.models.document import Document
     from sqlalchemy.future import select
-    from sqlalchemy import update
     
     # First, try to find for CURRENT application
     result = await db.execute(select(Document).filter(Document.application_id == application_id))
     docs = result.scalars().all()
     
-    # If NONE found, try to search for any orphaned documents for this USER
-    if not docs:
-        # Search for documents belonging to OTHER applications of this same user
-        from app.models.application import Application
-        subq = select(Application.application_id).filter(Application.user_id == user_id)
-        result_orphaned = await db.execute(
-            select(Document).filter(Document.application_id.in_(subq))
+    # If NONE found or some missing, try to search for any orphaned documents for this USER
+    # We always check for user documents if some are missing to ensure max recovery
+    from app.models.application import Application as AppModel
+    
+    # Use application's own user_id as source of truth for self-heal
+    effective_user_id = application.user_id 
+    
+    user_apps_query = await db.execute(select(AppModel.application_id).filter(AppModel.user_id == effective_user_id))
+    all_app_ids = user_apps_query.scalars().all()
+    
+    if all_app_ids:
+        # Search for ALL documents belonging to ANY application of this user
+        result_all = await db.execute(
+            select(Document).filter(Document.application_id.in_(all_app_ids))
         )
-        orphaned_docs = result_orphaned.scalars().all()
+        user_docs = result_all.scalars().all()
         
-        if orphaned_docs:
-            # AUTO-LINK: Update the application_id of these orphaned docs to the CURRENT one
-            for d in orphaned_docs:
+        # If we found docs elsewhere that aren't in our current 'docs' list, re-link them
+        current_doc_ids = {d.doc_id for d in docs}
+        healed_count = 0
+        for d in user_docs:
+            if d.application_id != application_id:
+                # Potential self-heal: Link this doc to the current application
                 d.application_id = application_id
+                healed_count += 1
+                if d.doc_id not in current_doc_ids:
+                    docs.append(d)
+        
+        if healed_count > 0:
             await db.commit()
-            # Re-fetch docs for the rest of the logic
-            docs = orphaned_docs
-            print(f"Self-healed: Re-linked {len(docs)} documents to Application {application_id}")
+            print(f"DEBUG: Self-healed {healed_count} docs for application {application_id} (User {effective_user_id})")
 
-    # Robust matching logic - use lowercase keyword search
+    # Robust matching logic - use lowercase keyword search and common variations
+    # We join both type and name to be safe
     all_text = " ".join([f"{d.document_type} {d.document_name}" for d in docs]).lower()
     
-    has_adhar = "adhar" in all_text
-    has_photo = "photo" in all_text or "photograph" in all_text or "image" in all_text
-    has_sign = "signature" in all_text or "sign" in all_text
+    has_adhar = any(x in all_text for x in ["adhar", "aadhar", "identity", "id_proof"])
+    has_photo = any(x in all_text for x in ["photo", "photograph", "image", "img", "pic"])
+    has_sign = any(x in all_text for x in ["signature", "sign"])
     
     missing = []
     if not has_adhar: missing.append("Aadhar Card")
@@ -209,10 +222,16 @@ async def finalize_application(db: AsyncSession, application_id: int, user_id: i
     if not has_sign: missing.append("Signature")
     
     if missing:
-        found_info = ", ".join([f"{d.document_type} ({d.document_name})" for d in docs]) or "None"
+        found_info = ", ".join([f"{d.document_type} (ID:{d.doc_id})" for d in docs]) or "None"
+        diagnostic = ""
+        if not docs:
+            diagnostic = " No documents are linked to this application or your user account."
+        else:
+            diagnostic = f" We found these files: [{found_info}], but they don't seem to match the required types."
+            
         raise HTTPException(
             status_code=400, 
-            detail=f"Mandatory documents missing: {', '.join(missing)}. We found: {found_info}. Please ensure you have uploaded Aadhar, Photo, and Signature."
+            detail=f"Mandatory documents missing: {', '.join(missing)}.{diagnostic} Please ensure you have uploaded Aadhar, Photo, and Signature with correct names."
         )
     
     # 3. Update Status

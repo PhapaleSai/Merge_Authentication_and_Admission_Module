@@ -207,7 +207,7 @@ function Layout({ children }) {
                         <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', padding: '1rem 0.75rem 0.4rem' }}>
                             Integrations
                         </div>
-                        <a href="http://localhost:5174/admin/dashboard" style={{ textDecoration: 'none' }}>
+                        <a href={`http://localhost:5174/admin/dashboard?token=${localStorage.getItem('admin_token')}`} style={{ textDecoration: 'none' }}>
                             <div style={{
                                 display: 'flex', alignItems: 'center', gap: '0.75rem',
                                 padding: '0.6rem 0.75rem', borderRadius: '12px', marginBottom: '2px',

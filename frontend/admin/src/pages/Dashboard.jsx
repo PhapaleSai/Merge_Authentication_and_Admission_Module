@@ -350,6 +350,37 @@ const Dashboard = () => {
                     {/* RIGHT COLUMN */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'sticky', top: '2rem' }}>
                         
+                        {/* Admission Module Admin Access */}
+                        <div className="erp-card" style={{ borderRadius: '28px', overflow: 'hidden', border: 'none', background: 'linear-gradient(135deg, #0c1e47, #1e293b)', color: 'white' }}>
+                            <div style={{ padding: '2rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                                    <div style={{ width: '48px', height: '48px', background: 'rgba(255,255,255,0.1)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <i className="fa-solid fa-server" style={{ fontSize: '1.4rem', color: '#fbbf24' }}></i>
+                                    </div>
+                                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Admission Module</h3>
+                                </div>
+                                <p style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '2rem', lineHeight: 1.6 }}>
+                                    Review student applications, verify uploaded documents, and manage admission approvals.
+                                </p>
+                                <button 
+                                    onClick={() => {
+                                        const token = localStorage.getItem('admin_token');
+                                        window.location.href = `http://localhost:5174/admin/dashboard?token=${token}`;
+                                    }}
+                                    style={{ 
+                                        width: '100%', padding: '1rem', borderRadius: '12px', border: 'none', 
+                                        background: 'white', color: '#0c1e47', fontWeight: 800, cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                                >
+                                    Admin Dashboard <i className="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Interactive Calendar */}
                         <div className="erp-card" style={{ borderRadius: '28px', overflow: 'hidden' }}>
                             <div style={{ padding: '1.75rem 2rem 0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -477,6 +508,35 @@ const Dashboard = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    <div className="erp-card" style={{ borderRadius: '28px', overflow: 'hidden', border: 'none' }}>
+                        <div style={{ padding: '2rem', background: 'linear-gradient(135deg, #0c1e47, #1e293b)', color: 'white' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                                <div style={{ width: '48px', height: '48px', background: 'rgba(255,255,255,0.1)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <i className="fa-solid fa-graduation-cap" style={{ fontSize: '1.4rem', color: '#fbbf24' }}></i>
+                                </div>
+                                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Admission Portal</h3>
+                            </div>
+                            <p style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '2rem', lineHeight: 1.6 }}>
+                                Complete your registration, upload documents, and track application status.
+                            </p>
+                            <button 
+                                onClick={() => {
+                                    const token = localStorage.getItem('admin_token');
+                                    window.location.href = `http://localhost:5174/?token=${token}`;
+                                }}
+                                style={{ 
+                                    width: '100%', padding: '1rem', borderRadius: '12px', border: 'none', 
+                                    background: 'white', color: '#0c1e47', fontWeight: 800, cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                                    transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                            >
+                                Enter Module <i className="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div className="erp-card" style={{ borderRadius: '28px' }}>
                         <div style={{ padding: '1.5rem 2rem 0', fontWeight: 800, fontSize: '0.9rem', borderBottom: '1px solid var(--erp-border)', paddingBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <div style={{ width: '36px', height: '36px', background: 'rgba(26,86,219,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

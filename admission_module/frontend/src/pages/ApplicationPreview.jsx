@@ -90,14 +90,22 @@ export default function ApplicationPreview() {
       // We don't navigate immediately anymore so the user can see the green success state
     } catch (err) {
       console.error(err);
-      const detail = err.response?.data?.detail || err.message || '';
-      if (detail.includes("Mandatory documents missing") && detail.includes("We found: None")) {
-         if (window.ERP && window.ERP.Toast) {
-            window.ERP.Toast.show('Error: Application data missing in DB. Go back to Dashboard and Start Again.', 'danger');
+      const detail = err.message || '';
+      if (detail.includes("Mandatory documents missing")) {
+         if (detail.includes("No documents are linked")) {
+            // This really means something is wrong with the DB link
+            if (window.ERP && window.ERP.Toast) {
+               window.ERP.Toast.show('Error: Application data missing in DB. Go back to Dashboard and Start Again.', 'danger');
+            }
+         } else {
+            // This means we found files but naming/type is wrong
+            if (window.ERP && window.ERP.Toast) {
+               window.ERP.Toast.show('Error: Some required documents are not named correctly. Please re-upload them.', 'warning');
+            }
          }
       } else {
          if (window.ERP && window.ERP.Toast) {
-            window.ERP.Toast.show(detail || 'Error executing submission.', 'danger');
+            window.ERP.Toast.show(detail || 'Submission failed.', 'danger');
          }
       }
     } finally {
@@ -241,31 +249,39 @@ export default function ApplicationPreview() {
             <div className="erp-card__title">Enclosures / Uploaded Documents</div>
           </div>
           <div className="erp-card__body">
-             <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'grid', gap: '12px' }}>
+              <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'grid', gap: '12px' }}>
                 {(() => {
-                  const allDocNames = documents.map(d => `${d.document_type} ${d.document_name}`.toLowerCase()).join(' ');
-                  const hasAdhar = allDocNames.includes('adhar');
-                  const hasPhoto = allDocNames.includes('photo') || allDocNames.includes('photograph');
-                  const hasSign = allDocNames.includes('sign') || allDocNames.includes('signature');
+                  const allDocText = documents.map(d => `${d.document_type} ${d.document_name}`.toLowerCase()).join(' ');
+                  
+                  // Use broader matching to match backend self-healing logic
+                  const hasAdhar = ["adhar", "aadhar", "identity", "id_proof"].some(x => allDocText.includes(x));
+                  const hasPhoto = ["photo", "photograph", "image", "img", "pic"].some(x => allDocText.includes(x));
+                  const hasSign = ["signature", "sign"].some(x => allDocText.includes(x));
 
                   return (
                     <>
                       <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                         <i className={`fa-solid ${hasAdhar ? 'fa-square-check erp-text-success' : 'fa-square'}`}></i>
+                         <i className={`fa-solid ${hasAdhar ? 'fa-square-check erp-text-success' : 'fa-square-xmark erp-text-danger'}`}></i>
                          1. Aadhar Card / Identity Proof
                       </li>
                       <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                         <i className={`fa-solid ${hasPhoto ? 'fa-square-check erp-text-success' : 'fa-square'}`}></i>
+                         <i className={`fa-solid ${hasPhoto ? 'fa-square-check erp-text-success' : 'fa-square-xmark erp-text-danger'}`}></i>
                          2. Passport Photograph
                       </li>
                       <li style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                         <i className={`fa-solid ${hasSign ? 'fa-square-check erp-text-success' : 'fa-square'}`}></i>
+                         <i className={`fa-solid ${hasSign ? 'fa-square-check erp-text-success' : 'fa-square-xmark erp-text-danger'}`}></i>
                          3. Digital Signature
                       </li>
+                      
+                      {!(hasAdhar && hasPhoto && hasSign) && !isReadOnly && (
+                        <div className="erp-alert erp-alert--warning" style={{ marginTop: '12px', fontSize: '13px' }}>
+                          <i className="fa-solid fa-triangle-exclamation"></i> <strong>Mandatory files missing.</strong> Please go back to the Documents step and upload the required files.
+                        </div>
+                      )}
                     </>
                   );
                 })()}
-             </ul>
+              </ul>
           </div>
         </section>
 
